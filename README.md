@@ -42,6 +42,6 @@ quotes:
     - `custom_path`: (*string*) **optional**, an override to `path_prefix` for the specific quote
 
 
-## Licence
+## License
 
 MIT
