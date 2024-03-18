@@ -1,7 +1,23 @@
 extern crate getopts;
 
 use getopts::Options;
+use serde::{Deserialize, Serialize};
 use std::{env, fs};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct Quote {
+    text: String,
+    author: String,
+    auto_id: Option<bool>,
+    custom_id: Option<String>,
+    custom_path: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct QuoteData {
+    path_prefix: String,
+    quotes: Vec<Quote>,
+}
 
 fn emit(input: &str, output_path: Option<String>) {
     let emit_path = output_path.unwrap_or("public".to_string());
@@ -9,6 +25,10 @@ fn emit(input: &str, output_path: Option<String>) {
 
     let data = fs::read_to_string(input).expect("failed to read input file");
     println!("{}", data);
+
+    let quote_data: QuoteData = serde_yaml::from_str(&data).unwrap();
+
+    println!("{:#?}", quote_data);
 }
 
 fn print_usage(program: &str, opts: Options) {
