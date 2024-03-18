@@ -1,14 +1,14 @@
 extern crate getopts;
 
 use getopts::Options;
-use std::env;
+use std::{env, fs};
 
-fn do_work(inp: &str, out: Option<String>) {
-    println!("input {}", inp);
-    match out {
-        Some(x) => println!("{}", x),
-        None => println!("No Output"),
-    }
+fn emit(input: &str, output_path: Option<String>) {
+    let emit_path = output_path.unwrap_or("public".to_string());
+    println!("{}", emit_path);
+
+    let data = fs::read_to_string(input).expect("failed to read input file");
+    println!("{}", data);
 }
 
 fn print_usage(program: &str, opts: Options) {
@@ -16,9 +16,7 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-
 fn main() {
-
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
 
@@ -26,8 +24,10 @@ fn main() {
     opts.optopt("o", "output", "set output folder path", "PATH");
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m }
-        Err(f) => { panic!("{}", f.to_string()) }
+        Ok(m) => m,
+        Err(f) => {
+            panic!("{}", f.to_string())
+        }
     };
     if matches.opt_present("h") {
         print_usage(&program, opts);
@@ -40,5 +40,5 @@ fn main() {
         print_usage(&program, opts);
         return;
     };
-    do_work(&input, output);
+    emit(&input, output);
 }
