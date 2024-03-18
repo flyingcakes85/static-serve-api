@@ -3,6 +3,7 @@ extern crate getopts;
 use getopts::Options;
 use serde::{Deserialize, Serialize};
 use std::{env, fs};
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct Quote {
@@ -10,12 +11,12 @@ struct Quote {
     author: String,
     auto_id: Option<bool>,
     custom_id: Option<String>,
-    custom_path: Option<String>,
+    custom_path: Option<PathBuf>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct QuoteData {
-    path_prefix: String,
+    path_prefix: Option<String>,
     quotes: Vec<Quote>,
 }
 
@@ -29,6 +30,37 @@ fn emit(input: &str, output_path: Option<String>) {
     let quote_data: QuoteData = serde_yaml::from_str(&data).unwrap();
 
     println!("{:#?}", quote_data);
+
+    // attempt creating emit folder
+    std::fs::create_dir_all(PathBuf::from(&emit_path)).unwrap();
+
+    let mut auto_id: usize = 1;
+
+    for quote in quote_data.quotes {
+        let text = format!("{{\"author\":\"{}\",\"text\":\"{}\"}}", quote.author, quote.text);
+
+        let mut filepath = PathBuf::new();
+        filepath.push(&emit_path);
+        if quote.custom_path.is_some() {
+            filepath.push(quote.custom_path.unwrap());
+        } else {
+            filepath.push(quote_data.path_prefix.clone().unwrap());
+        }
+        std::fs::create_dir_all(&filepath).unwrap();
+
+
+        if quote.custom_id.is_some() {
+            filepath.push(&quote.custom_id.unwrap());
+            fs::write(&filepath, &text).unwrap();
+            filepath.pop();
+        }
+
+        if quote.auto_id.is_none() || quote.auto_id.unwrap() == true {
+            filepath.push(auto_id.to_string());
+            fs::write(&filepath, &text).unwrap();
+            auto_id = auto_id + 1;
+        }
+    }
 }
 
 fn print_usage(program: &str, opts: Options) {
