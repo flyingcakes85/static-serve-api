@@ -2,8 +2,8 @@ extern crate getopts;
 
 use getopts::Options;
 use serde::{Deserialize, Serialize};
-use std::{env, fs};
 use std::path::PathBuf;
+use std::{env, fs};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct Quote {
@@ -33,21 +33,29 @@ fn emit(input: &str, output_path: Option<String>) {
 
     // attempt creating emit folder
     std::fs::create_dir_all(PathBuf::from(&emit_path)).unwrap();
+    if quote_data.path_prefix.is_some() {
+        let mut filepath = PathBuf::new();
+        filepath.push(&emit_path);
+        filepath.push(quote_data.path_prefix.clone().unwrap());
+        std::fs::create_dir_all(&filepath).unwrap();
+    }
 
     let mut auto_id: usize = 1;
 
     for quote in quote_data.quotes {
-        let text = format!("{{\"author\":\"{}\",\"text\":\"{}\"}}", quote.author, quote.text);
+        let text = format!(
+            "{{\"author\":\"{}\",\"text\":\"{}\"}}",
+            quote.author, quote.text
+        );
 
         let mut filepath = PathBuf::new();
         filepath.push(&emit_path);
         if quote.custom_path.is_some() {
             filepath.push(quote.custom_path.unwrap());
-        } else {
+            std::fs::create_dir_all(&filepath).unwrap();
+        } else if quote_data.path_prefix.is_some() {
             filepath.push(quote_data.path_prefix.clone().unwrap());
         }
-        std::fs::create_dir_all(&filepath).unwrap();
-
 
         if quote.custom_id.is_some() {
             filepath.push(&quote.custom_id.unwrap());
